@@ -1,11 +1,17 @@
+import { Suspense } from "react";
+
 export const metadata = {
   title: "Looma - SignUp",
-  description: "Login to access your Looma account",
+  description: "Signup to create account in Looma",
   icons: {
     icon: "/looma-icon.png",
-  }
+  },
 };
 
 export default function LoginLayout({ children }) {
-  return <>{children}</>;
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      {children}
+    </Suspense>
+  );
 }

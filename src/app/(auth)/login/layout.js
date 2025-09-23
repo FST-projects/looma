@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+
 export const metadata = {
   title: "Looma - Login",
   description: "Login to access your Looma account",
@@ -7,5 +9,9 @@ export const metadata = {
 };
 
 export default function LoginLayout({ children }) {
-  return <>{children}</>;
+   return (
+      <Suspense fallback={<div>Loading...</div>}>
+        {children}
+      </Suspense>
+    );
 }

@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { auth, db, googleProvider } from "@/lib/firebaseClient";
@@ -24,16 +23,26 @@ export default function SignupPage() {
     password: "",
     confirmPassword: "",
   });
-  const [verificationCode, setVerificationCode] = useState(["", "", "", "", "", ""]);
+  const [verificationCode, setVerificationCode] = useState([
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+  ]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [showPasswordRequirements, setShowPasswordRequirements] = useState(false);
+  const [showPasswordRequirements, setShowPasswordRequirements] =
+    useState(false);
   const [countdown, setCountdown] = useState(0);
   const [buttonText, setButtonText] = useState("Continue");
-  const [googleButtonText, setGoogleButtonText] = useState("Continue with Google");
+  const [googleButtonText, setGoogleButtonText] = useState(
+    "Continue with Google"
+  );
   const [success, setSuccess] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [pendingUserData, setPendingUserData] = useState(null);
@@ -60,7 +69,7 @@ export default function SignupPage() {
 
   // Auto-verify when all digits are filled
   useEffect(() => {
-    const allDigitsFilled = verificationCode.every(digit => digit !== "");
+    const allDigitsFilled = verificationCode.every((digit) => digit !== "");
     if (allDigitsFilled && !autoVerifying && !loading && currentStep === 2) {
       handleAutoVerification();
     }
@@ -78,12 +87,12 @@ export default function SignupPage() {
   };
 
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
 
-    if (field === 'password') {
+    if (field === "password") {
       setPasswordStrength(calculatePasswordStrength(value));
     }
   };
@@ -91,7 +100,7 @@ export default function SignupPage() {
   const handleVerificationCodeChange = (index, value) => {
     // Only allow numbers
     if (!/^\d?$/.test(value)) return;
-    
+
     const newCode = [...verificationCode];
     newCode[index] = value;
     setVerificationCode(newCode);
@@ -136,11 +145,10 @@ export default function SignupPage() {
 
   const sendOTPCode = async (email) => {
     try {
-      
-      const response = await fetch('/api/send-otp', {
-        method: 'POST',
+      const response = await fetch("/api/send-otp", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ email }),
       });
@@ -148,24 +156,23 @@ export default function SignupPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to send OTP');
+        throw new Error(data.error || "Failed to send OTP");
       }
 
       setOtpSent(true);
       return true;
     } catch (error) {
-      throw new Error('Failed to send verification code. Please try again.');
+      throw new Error("Failed to send verification code. Please try again.");
     }
   };
 
   const verifyOTPCode = async (email, otp) => {
     try {
-
       // Use PUT method to verify OTP (as defined in your route.js)
-      const response = await fetch('/api/send-otp', {
-        method: 'PUT',
+      const response = await fetch("/api/send-otp", {
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ email, otp }),
       });
@@ -173,7 +180,7 @@ export default function SignupPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Invalid verification code');
+        throw new Error(data.error || "Invalid verification code");
       }
 
       return true;
@@ -186,8 +193,8 @@ export default function SignupPage() {
     try {
       // Create user with email and password
       const { user } = await createUserWithEmailAndPassword(
-        auth, 
-        userData.email, 
+        auth,
+        userData.email,
         userData.password
       );
 
@@ -226,9 +233,9 @@ export default function SignupPage() {
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
-        password: formData.password
+        password: formData.password,
       };
-      
+
       setPendingUserData(userData);
 
       // Send OTP via our API
@@ -240,7 +247,9 @@ export default function SignupPage() {
       setButtonText("Continue");
       setError("");
     } catch (error) {
-      setError(error.message || "Failed to send verification code. Please try again.");
+      setError(
+        error.message || "Failed to send verification code. Please try again."
+      );
       setPendingUserData(null);
     } finally {
       setLoading(false);
@@ -273,7 +282,8 @@ export default function SignupPage() {
       setSuccess(true);
       setGoogleButtonText(
         <>
-          <span className="material-symbols-outlined">check_circle</span> Success!
+          <span className="material-symbols-outlined">check_circle</span>{" "}
+          Success!
         </>
       );
 
@@ -283,8 +293,10 @@ export default function SignupPage() {
         window.location.href = redirectTo;
       }, 1500);
     } catch (error) {
-      if (error.code === 'auth/operation-not-allowed') {
-        setError("Google authentication is not enabled. Please contact support.");
+      if (error.code === "auth/operation-not-allowed") {
+        setError(
+          "Google authentication is not enabled. Please contact support."
+        );
       } else {
         setError("Google sign-up failed. Please try again.");
       }
@@ -302,31 +314,34 @@ export default function SignupPage() {
 
     try {
       const otp = verificationCode.join("");
-      
+
       // Verify OTP with our API
       await verifyOTPCode(pendingUserData.email, otp);
 
       // Only NOW create the Firebase user after successful OTP verification
       await createFirebaseUser(pendingUserData);
-      
+
       setCurrentStep(3);
       setSuccess(true);
       setPendingUserData(null);
-      
+
       // Redirect after success
       setTimeout(() => {
         const redirectTo = redirectParam || "/";
         window.location.href = redirectTo;
       }, 3000);
     } catch (error) {
-      setError(error.message || "Verification failed. Please check the code and try again.");
-      
+      setError(
+        error.message ||
+          "Verification failed. Please check the code and try again."
+      );
+
       // Shake animation for error
-      const inputs = document.querySelectorAll('.verification-inputs input');
-      inputs.forEach(input => {
-        input.style.animation = 'shake 0.5s';
+      const inputs = document.querySelectorAll(".verification-inputs input");
+      inputs.forEach((input) => {
+        input.style.animation = "shake 0.5s";
         setTimeout(() => {
-          input.style.animation = '';
+          input.style.animation = "";
         }, 500);
       });
     } finally {
@@ -336,7 +351,7 @@ export default function SignupPage() {
 
   const handleVerificationSubmit = async (e) => {
     if (e) e.preventDefault();
-    
+
     // Use the same logic as auto-verification
     await handleAutoVerification();
   };
@@ -344,18 +359,18 @@ export default function SignupPage() {
   const skipVerification = () => {
     // If user skips, we still need to create the account but mark as unverified
     if (pendingUserData) {
-      createFirebaseUser({...pendingUserData})
+      createFirebaseUser({ ...pendingUserData })
         .then(() => {
           setCurrentStep(3);
           setSuccess(true);
           setPendingUserData(null);
-          
+
           setTimeout(() => {
             const redirectTo = redirectParam || "/";
             window.location.href = redirectTo;
           }, 3000);
         })
-        .catch(error => {
+        .catch((error) => {
           setError("Failed to create account. Please try again.");
         });
     } else {
@@ -383,19 +398,21 @@ export default function SignupPage() {
 
   const getPasswordStrengthColor = () => {
     const hues = [0, 30, 60, 90, 120];
-    return passwordStrength > 0 ? `hsl(${hues[passwordStrength - 1]}, 85%, 45%)` : "#ef4444";
+    return passwordStrength > 0
+      ? `hsl(${hues[passwordStrength - 1]}, 85%, 45%)`
+      : "#ef4444";
   };
 
   const handleKeyDown = (index, e) => {
-    if (e.key === 'Backspace' && !verificationCode[index] && index > 0) {
+    if (e.key === "Backspace" && !verificationCode[index] && index > 0) {
       const prevInput = document.getElementById(`digit-${index - 1}`);
       if (prevInput) {
         prevInput.focus();
         prevInput.select();
       }
     }
-    
-    if (e.key === 'ArrowLeft' && index > 0) {
+
+    if (e.key === "ArrowLeft" && index > 0) {
       e.preventDefault();
       const prevInput = document.getElementById(`digit-${index - 1}`);
       if (prevInput) {
@@ -403,8 +420,8 @@ export default function SignupPage() {
         prevInput.select();
       }
     }
-    
-    if (e.key === 'ArrowRight' && index < 5) {
+
+    if (e.key === "ArrowRight" && index < 5) {
       e.preventDefault();
       const nextInput = document.getElementById(`digit-${index + 1}`);
       if (nextInput) {
@@ -428,375 +445,461 @@ export default function SignupPage() {
 
   const checkRequirement = (type, password) => {
     switch (type) {
-      case 'length': return password.length >= 8;
-      case 'uppercase': return /[A-Z]/.test(password);
-      case 'lowercase': return /[a-z]/.test(password);
-      case 'number': return /[0-9]/.test(password);
-      case 'special': return /[^A-Za-z0-9]/.test(password);
-      default: return false;
+      case "length":
+        return password.length >= 8;
+      case "uppercase":
+        return /[A-Z]/.test(password);
+      case "lowercase":
+        return /[a-z]/.test(password);
+      case "number":
+        return /[0-9]/.test(password);
+      case "special":
+        return /[^A-Za-z0-9]/.test(password);
+      default:
+        return false;
     }
   };
 
   return (
-    <div className="signup-container">
-      <div className="signup-header">
-        <div className="logo-container">
-          <img src="/looma-logo.png" alt="Looma Logo" />
+      <div className="signup-container">
+        <div className="signup-header">
+          <div className="logo-container">
+            <img src="/looma-logo.png" alt="Looma Logo" />
+          </div>
+          <h1>Create Your Account</h1>
+          <p>Join our community and start your journey</p>
         </div>
-        <h1>Create Your Account</h1>
-        <p>Join our community and start your journey</p>
-      </div>
 
-      {/* Progress Steps */}
-      <div className="progress-steps">
-        <div 
-          className="progress-bar" 
-          style={{ width: `${((currentStep - 1) / 2) * 100}%` }}
-        ></div>
-        <div className={`step ${currentStep >= 1 ? 'active' : ''}`}>
-          1
-          <span className="step-label">Account</span>
+        {/* Progress Steps */}
+        <div className="progress-steps">
+          <div
+            className="progress-bar"
+            style={{ width: `${((currentStep - 1) / 2) * 100}%` }}
+          ></div>
+          <div className={`step ${currentStep >= 1 ? "active" : ""}`}>
+            1<span className="step-label">Account</span>
+          </div>
+          <div className={`step ${currentStep >= 2 ? "active" : ""}`}>
+            2<span className="step-label">Verify</span>
+          </div>
+          <div className={`step ${currentStep >= 3 ? "active" : ""}`}>
+            3<span className="step-label">Complete</span>
+          </div>
         </div>
-        <div className={`step ${currentStep >= 2 ? 'active' : ''}`}>
-          2
-          <span className="step-label">Verify</span>
-        </div>
-        <div className={`step ${currentStep >= 3 ? 'active' : ''}`}>
-          3
-          <span className="step-label">Complete</span>
-        </div>
-      </div>
 
-      <div className="form-container">
-        {/* Step 1: Account Information */}
-        {currentStep === 1 && (
-          <form className="form-step active" onSubmit={handleStep1Submit}>
-            <div className="name-fields">
+        <div className="form-container">
+          {/* Step 1: Account Information */}
+          {currentStep === 1 && (
+            <form className="form-step active" onSubmit={handleStep1Submit}>
+              <div className="name-fields">
+                <div className="form-group">
+                  <label htmlFor="firstName">First Name</label>
+                  <div className="input-container">
+                    <span className="material-symbols-outlined input-icon">
+                      person
+                    </span>
+                    <input
+                      type="text"
+                      id="firstName"
+                      placeholder="John"
+                      required
+                      value={formData.firstName}
+                      onChange={(e) =>
+                        handleInputChange("firstName", e.target.value)
+                      }
+                    />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="lastName">Last Name</label>
+                  <div className="input-container">
+                    <span className="material-symbols-outlined input-icon">
+                      person
+                    </span>
+                    <input
+                      type="text"
+                      id="lastName"
+                      placeholder="Doe"
+                      required
+                      value={formData.lastName}
+                      onChange={(e) =>
+                        handleInputChange("lastName", e.target.value)
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+
               <div className="form-group">
-                <label htmlFor="firstName">First Name</label>
+                <label htmlFor="email">Email</label>
                 <div className="input-container">
-                  <span className="material-symbols-outlined input-icon">person</span>
+                  <span className="material-symbols-outlined input-icon">
+                    mail
+                  </span>
                   <input
-                    type="text"
-                    id="firstName"
-                    placeholder="John"
+                    type="email"
+                    id="email"
+                    placeholder="you@example.com"
                     required
-                    value={formData.firstName}
-                    onChange={(e) => handleInputChange('firstName', e.target.value)}
+                    value={formData.email}
+                    onChange={(e) => handleInputChange("email", e.target.value)}
                   />
                 </div>
               </div>
+
               <div className="form-group">
-                <label htmlFor="lastName">Last Name</label>
-                <div className="input-container">
-                  <span className="material-symbols-outlined input-icon">person</span>
+                <label htmlFor="password">Password</label>
+                <div className="input-container has-actions">
+                  <span className="material-symbols-outlined input-icon">
+                    lock
+                  </span>
                   <input
-                    type="text"
-                    id="lastName"
-                    placeholder="Doe"
+                    type={showPassword ? "text" : "password"}
+                    id="password"
+                    placeholder="••••••••"
                     required
-                    value={formData.lastName}
-                    onChange={(e) => handleInputChange('lastName', e.target.value)}
+                    value={formData.password}
+                    onChange={(e) =>
+                      handleInputChange("password", e.target.value)
+                    }
                   />
-                </div>
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="email">Email</label>
-              <div className="input-container">
-                <span className="material-symbols-outlined input-icon">mail</span>
-                <input
-                  type="email"
-                  id="email"
-                  placeholder="you@example.com"
-                  required
-                  value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="password">Password</label>
-              <div className="input-container has-actions">
-                <span className="material-symbols-outlined input-icon">lock</span>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  id="password"
-                  placeholder="••••••••"
-                  required
-                  value={formData.password}
-                  onChange={(e) => handleInputChange('password', e.target.value)}
-                />
-                <div className="input-actions">
-                  <span
-                    className="material-symbols-outlined toggle-password"
-                    onClick={togglePasswordVisibility}
-                    role="button"
-                    tabIndex="0"
-                    aria-pressed={showPassword}
-                    title={showPassword ? "Hide password" : "Show password"}
-                  >
-                                        {showPassword ? "visibility" : "visibility_off"}
-                  </span>
-                  <span
-                    className="material-symbols-outlined password-info"
-                    onClick={togglePasswordRequirements}
-                    title="Password requirements"
-                    aria-label="Password requirements"
-                  >
-                    info
-                  </span>
-                </div>
-              </div>
-              {formData.password && (
-                <>
-                  <div className="password-strength">
-                    <div 
-                      className="password-strength-bar"
-                      style={{ 
-                        width: `${(passwordStrength / 5) * 100}%`,
-                        backgroundColor: getPasswordStrengthColor()
-                      }}
-                    ></div>
+                  <div className="input-actions">
+                    <span
+                      className="material-symbols-outlined toggle-password"
+                      onClick={togglePasswordVisibility}
+                      role="button"
+                      tabIndex="0"
+                      aria-pressed={showPassword}
+                      title={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? "visibility" : "visibility_off"}
+                    </span>
+                    <span
+                      className="material-symbols-outlined password-info"
+                      onClick={togglePasswordRequirements}
+                      title="Password requirements"
+                      aria-label="Password requirements"
+                    >
+                      info
+                    </span>
                   </div>
-                  <div 
-                    className="password-strength-text"
-                    style={{ color: getPasswordStrengthColor() }}
+                </div>
+                {formData.password && (
+                  <>
+                    <div className="password-strength">
+                      <div
+                        className="password-strength-bar"
+                        style={{
+                          width: `${(passwordStrength / 5) * 100}%`,
+                          backgroundColor: getPasswordStrengthColor(),
+                        }}
+                      ></div>
+                    </div>
+                    <div
+                      className="password-strength-text"
+                      style={{ color: getPasswordStrengthColor() }}
+                    >
+                      {getPasswordStrengthLabel()}
+                    </div>
+                  </>
+                )}
+                <div
+                  className={`password-requirements ${
+                    showPasswordRequirements ? "show" : ""
+                  }`}
+                >
+                  <div
+                    className={`requirement ${
+                      checkRequirement("length", formData.password) ? "met" : ""
+                    }`}
                   >
-                    {getPasswordStrengthLabel()}
+                    <span className="material-symbols-outlined requirement-icon">
+                      {checkRequirement("length", formData.password)
+                        ? "check"
+                        : "close"}
+                    </span>
+                    At least 8 characters
                   </div>
-                </>
-              )}
-              <div className={`password-requirements ${showPasswordRequirements ? 'show' : ''}`}>
-                <div className={`requirement ${checkRequirement('length', formData.password) ? 'met' : ''}`}>
-                  <span className="material-symbols-outlined requirement-icon">
-                    {checkRequirement('length', formData.password) ? 'check' : 'close'}
-                  </span>
-                  At least 8 characters
-                </div>
-                <div className={`requirement ${checkRequirement('uppercase', formData.password) ? 'met' : ''}`}>
-                  <span className="material-symbols-outlined requirement-icon">
-                    {checkRequirement('uppercase', formData.password) ? 'check' : 'close'}
-                  </span>
-                  One uppercase letter
-                </div>
-                <div className={`requirement ${checkRequirement('lowercase', formData.password) ? 'met' : ''}`}>
-                  <span className="material-symbols-outlined requirement-icon">
-                    {checkRequirement('lowercase', formData.password) ? 'check' : 'close'}
-                  </span>
-                  One lowercase letter
-                </div>
-                <div className={`requirement ${checkRequirement('number', formData.password) ? 'met' : ''}`}>
-                  <span className="material-symbols-outlined requirement-icon">
-                    {checkRequirement('number', formData.password) ? 'check' : 'close'}
-                  </span>
-                  One number
-                </div>
-                <div className={`requirement ${checkRequirement('special', formData.password) ? 'met' : ''}`}>
-                  <span className="material-symbols-outlined requirement-icon">
-                    {checkRequirement('special', formData.password) ? 'check' : 'close'}
-                  </span>
-                  One special character
-                </div>
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="confirmPassword">Confirm Password</label>
-              <div className="input-container has-actions">
-                <span className="material-symbols-outlined input-icon">lock</span>
-                <input
-                  type={showConfirmPassword ? "text" : "password"}
-                  id="confirmPassword"
-                  placeholder="••••••••"
-                  required
-                  value={formData.confirmPassword}
-                  onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                />
-                <div className="input-actions">
-                  <span
-                    className="material-symbols-outlined toggle-password"
-                    onClick={toggleConfirmPasswordVisibility}
-                    role="button"
-                    tabIndex="0"
-                    aria-pressed={showConfirmPassword}
-                    title={showConfirmPassword ? "Hide password" : "Show password"}
+                  <div
+                    className={`requirement ${
+                      checkRequirement("uppercase", formData.password)
+                        ? "met"
+                        : ""
+                    }`}
                   >
-                    {showConfirmPassword ? "visibility" : "visibility_off"}
-                  </span>
+                    <span className="material-symbols-outlined requirement-icon">
+                      {checkRequirement("uppercase", formData.password)
+                        ? "check"
+                        : "close"}
+                    </span>
+                    One uppercase letter
+                  </div>
+                  <div
+                    className={`requirement ${
+                      checkRequirement("lowercase", formData.password)
+                        ? "met"
+                        : ""
+                    }`}
+                  >
+                    <span className="material-symbols-outlined requirement-icon">
+                      {checkRequirement("lowercase", formData.password)
+                        ? "check"
+                        : "close"}
+                    </span>
+                    One lowercase letter
+                  </div>
+                  <div
+                    className={`requirement ${
+                      checkRequirement("number", formData.password) ? "met" : ""
+                    }`}
+                  >
+                    <span className="material-symbols-outlined requirement-icon">
+                      {checkRequirement("number", formData.password)
+                        ? "check"
+                        : "close"}
+                    </span>
+                    One number
+                  </div>
+                  <div
+                    className={`requirement ${
+                      checkRequirement("special", formData.password)
+                        ? "met"
+                        : ""
+                    }`}
+                  >
+                    <span className="material-symbols-outlined requirement-icon">
+                      {checkRequirement("special", formData.password)
+                        ? "check"
+                        : "close"}
+                    </span>
+                    One special character
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {error && (
-              <p className="error-message">{error}</p>
-            )}
+              <div className="form-group">
+                <label htmlFor="confirmPassword">Confirm Password</label>
+                <div className="input-container has-actions">
+                  <span className="material-symbols-outlined input-icon">
+                    lock
+                  </span>
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    id="confirmPassword"
+                    placeholder="••••••••"
+                    required
+                    value={formData.confirmPassword}
+                    onChange={(e) =>
+                      handleInputChange("confirmPassword", e.target.value)
+                    }
+                  />
+                  <div className="input-actions">
+                    <span
+                      className="material-symbols-outlined toggle-password"
+                      onClick={toggleConfirmPasswordVisibility}
+                      role="button"
+                      tabIndex="0"
+                      aria-pressed={showConfirmPassword}
+                      title={
+                        showConfirmPassword ? "Hide password" : "Show password"
+                      }
+                    >
+                      {showConfirmPassword ? "visibility" : "visibility_off"}
+                    </span>
+                  </div>
+                </div>
+              </div>
 
-            <div className="form-buttons">
-              <button type="button" className="btn btn-secondary btn-hidden">
-                Back
+              {error && <p className="error-message">{error}</p>}
+
+              <div className="form-buttons">
+                <button type="button" className="btn btn-secondary btn-hidden">
+                  Back
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={loading}
+                >
+                  {buttonText}
+                  <span className="material-symbols-outlined">
+                    arrow_forward
+                  </span>
+                </button>
+              </div>
+
+              <div className="divider">
+                <span>Or continue with</span>
+              </div>
+
+              <button
+                type="button"
+                className="google-button"
+                onClick={handleGoogleSignup}
+                disabled={loading}
+              >
+                <img src="/google.svg" width="20px" alt="" />
+                {googleButtonText}
               </button>
-              <button type="submit" className="btn btn-primary" disabled={loading}>
-                {buttonText}
-                <span className="material-symbols-outlined">arrow_forward</span>
-              </button>
-            </div>
 
-            <div className="divider">
-              <span>Or continue with</span>
-            </div>
+              <div className="already-have-account">
+                Already have an account? <a href="/login">Sign in</a>
+              </div>
+            </form>
+          )}
 
-            <button
-              type="button"
-              className="google-button"
-              onClick={handleGoogleSignup}
-              disabled={loading}
+          {/* Step 2: Verification */}
+          {currentStep === 2 && (
+            <form
+              className="form-step active"
+              onSubmit={handleVerificationSubmit}
             >
-              <img src="/google.svg" width="20px" alt="" />
-              {googleButtonText}
-            </button>
-
-            <div className="already-have-account">
-              Already have an account? <a href="/login">Sign in</a>
-            </div>
-          </form>
-        )}
-
-        {/* Step 2: Verification */}
-        {currentStep === 2 && (
-          <form className="form-step active" onSubmit={handleVerificationSubmit}>
-            <div className="verification-header">
-              <h2>Verify Your Email</h2>
-              <p>
-                We've sent a 6-digit verification code to
-                <span className="font-medium"> {pendingUserData?.email || formData.email}</span>. 
-                Please check your inbox and enter the code below.
-              </p>
-            </div>
-
-            <div className="form-groups">
-              <label>Verification Code</label>
-              <div className="verification-inputs" id="verificationContainer">
-                {verificationCode.map((digit, index) => (
-                  <input
-                    key={index}
-                    id={`digit-${index}`}
-                    type="text"
-                    maxLength="1"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    value={digit}
-                    onChange={(e) => handleVerificationCodeChange(index, e.target.value)}
-                    onKeyDown={(e) => handleKeyDown(index, e)}
-                    onFocus={(e) => e.target.select()}
-                    disabled={loading || autoVerifying}
-                    style={{ color: 'var(--text-dark)' }}
-                  />
-                ))}
-              </div>
-              {(autoVerifying || loading) && (
-                <div className="redirect-message">
-                  <span className="material-symbols-outlined">autorenew</span>
-                  Verifying code...
-                </div>
-              )}
-            </div>
-
-            <div className="verification-actions">
-              <div className="resend-code">
+              <div className="verification-header">
+                <h2>Verify Your Email</h2>
                 <p>
-                  Didn't receive the code?{" "}
-                  <button 
-                    type="button"
-                    className="resend-link"
-                    onClick={resendVerificationCode} 
-                    disabled={countdown > 0 || loading || autoVerifying}
-                  >
-                    Resend code
-                  </button>
-                  {countdown > 0 && <span className="countdown">({countdown}s)</span>}
+                  We've sent a 6-digit verification code to
+                  <span className="font-medium">
+                    {" "}
+                    {pendingUserData?.email || formData.email}
+                  </span>
+                  . Please check your inbox and enter the code below.
                 </p>
               </div>
 
-              <button 
-                type="button"
-                className="skip-verification"
-                onClick={skipVerification}
-                disabled={loading || autoVerifying}
-              >
-                Skip verification for now
-              </button>
-            </div>
-
-            {error && (
-              <p className="error-message">{error}</p>
-            )}
-
-            <div className="form-buttons">
-              <button 
-                type="button" 
-                className="btn btn-secondary"
-                onClick={() => {
-                  setCurrentStep(1);
-                  setPendingUserData(null);
-                  setVerificationCode(["", "", "", "", "", ""]);
-                }}
-                disabled={loading || autoVerifying}
-              >
-                <span className="material-symbols-outlined">arrow_back</span>
-                Back
-              </button>
-              <button 
-                type="submit" 
-                className="btn btn-primary" 
-                disabled={loading || autoVerifying || !verificationCode.every(digit => digit !== "")}
-              >
-                {autoVerifying ? "Verifying..." : "Verify Email"}
-                <span className="material-symbols-outlined">check</span>
-              </button>
-            </div>
-          </form>
-        )}
-
-        {/* Step 3: Success */}
-        {currentStep === 3 && (
-          <div className="form-step active">
-            <div className="success-message">
-              <div className="success-icon">
-                <span className="material-symbols-outlined" style={{fontSize: "40px"}} >check_circle</span>
-              </div>
-              <h2>Account Created Successfully!</h2>
-              <p>
-                Your account has been created and your email has been verified. 
-                You now have full access to all features.
-              </p>
-              
-              {success && (
-                <div className="redirect-message">
-                  <span className="material-symbols-outlined">autorenew</span>
-                  Redirecting you to the dashboard...
+              <div className="form-groups">
+                <label>Verification Code</label>
+                <div className="verification-inputs" id="verificationContainer">
+                  {verificationCode.map((digit, index) => (
+                    <input
+                      key={index}
+                      id={`digit-${index}`}
+                      type="text"
+                      maxLength="1"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={digit}
+                      onChange={(e) =>
+                        handleVerificationCodeChange(index, e.target.value)
+                      }
+                      onKeyDown={(e) => handleKeyDown(index, e)}
+                      onFocus={(e) => e.target.select()}
+                      disabled={loading || autoVerifying}
+                      style={{ color: "var(--text-dark)" }}
+                    />
+                  ))}
                 </div>
-              )}
-              
-              <div className="success-actions">
-                <button 
-                  type="button" 
-                  className="btn btn-primary"
-                  onClick={() => {
-                    const redirectTo = redirectParam || "/";
-                    window.location.href = redirectTo;
-                  }}
+                {(autoVerifying || loading) && (
+                  <div className="redirect-message">
+                    <span className="material-symbols-outlined">autorenew</span>
+                    Verifying code...
+                  </div>
+                )}
+              </div>
+
+              <div className="verification-actions">
+                <div className="resend-code">
+                  <p>
+                    Didn't receive the code?{" "}
+                    <button
+                      type="button"
+                      className="resend-link"
+                      onClick={resendVerificationCode}
+                      disabled={countdown > 0 || loading || autoVerifying}
+                    >
+                      Resend code
+                    </button>
+                    {countdown > 0 && (
+                      <span className="countdown">({countdown}s)</span>
+                    )}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  className="skip-verification"
+                  onClick={skipVerification}
+                  disabled={loading || autoVerifying}
                 >
-                  Go to Dashboard
-                  <span className="material-symbols-outlined">arrow_forward</span>
+                  Skip verification for now
                 </button>
               </div>
+
+              {error && <p className="error-message">{error}</p>}
+
+              <div className="form-buttons">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    setCurrentStep(1);
+                    setPendingUserData(null);
+                    setVerificationCode(["", "", "", "", "", ""]);
+                  }}
+                  disabled={loading || autoVerifying}
+                >
+                  <span className="material-symbols-outlined">arrow_back</span>
+                  Back
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={
+                    loading ||
+                    autoVerifying ||
+                    !verificationCode.every((digit) => digit !== "")
+                  }
+                >
+                  {autoVerifying ? "Verifying..." : "Verify Email"}
+                  <span className="material-symbols-outlined">check</span>
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* Step 3: Success */}
+          {currentStep === 3 && (
+            <div className="form-step active">
+              <div className="success-message">
+                <div className="success-icon">
+                  <span
+                    className="material-symbols-outlined"
+                    style={{ fontSize: "40px" }}
+                  >
+                    check_circle
+                  </span>
+                </div>
+                <h2>Account Created Successfully!</h2>
+                <p>
+                  Your account has been created and your email has been
+                  verified. You now have full access to all features.
+                </p>
+
+                {success && (
+                  <div className="redirect-message">
+                    <span className="material-symbols-outlined">autorenew</span>
+                    Redirecting you to the dashboard...
+                  </div>
+                )}
+
+                <div className="success-actions">
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => {
+                      const redirectTo = redirectParam || "/";
+                      window.location.href = redirectTo;
+                    }}
+                  >
+                    Go to Dashboard
+                    <span className="material-symbols-outlined">
+                      arrow_forward
+                    </span>
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
-    </div>
   );
 }
