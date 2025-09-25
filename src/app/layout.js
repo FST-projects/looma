@@ -1,4 +1,11 @@
 
+export const metadata = {
+  title: "Looma - The Blog on Everything",
+  description: "Looma is a Blog site that tries to give effective articles from every category possible with better features",
+  icons: {
+    icon: "/looma-icon.png",
+  },
+};
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
